@@ -13,7 +13,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new APIError(400, "All feilds are required");
   }
 
-  const existingUser = User.find({ $or: [email, username] });
+  const existingUser = await User.findOne({ $or: [{ email }, { username }] });
   if (existingUser) {
     throw new APIError(400, "User exists");
   }
@@ -25,6 +25,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new APIError(400, "Avatar Required");
   }
   const avatar = await uploadOnCloudinary(avatarlocalpath);
+  console.log("Avatar upload response:", avatar);
+
   const cover = await uploadOnCloudinary(coverlocalpath);
   if (!avatar) {
     throw new APIError(400, "Avatar Required");
