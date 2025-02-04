@@ -17,16 +17,13 @@ const uploadOnCloudinary = async function (localFilePath) {
 
     console.log("Cloudinary uploaded:", res.secure_url);
 
-    // ✅ Delete file only if it exists
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
 
-    return { url: res.secure_url }; // ✅ Return an object for better handling
+    return { url: res.secure_url };
   } catch (err) {
     console.error("Cloudinary upload error:", err);
-
-    // ✅ Prevent crash if file is missing
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
