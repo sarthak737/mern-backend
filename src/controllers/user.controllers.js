@@ -177,4 +177,94 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changePassword = asyncHandler(async (req, res) => {
+  const { oldPass, newPass } = req.body;
+  const user = await User.findById(req.user?.id);
+  const isCorrectPass = await user.isPasswordCorrect(oldPass);
+
+  if (!isCorrectPass) {
+    throw new APIError(400, "Old password wrong");
+  }
+
+  user.password = newPass;
+  await user.save({ validateBeforeSave: false });
+  return res.status(200).json(new APIResponse(200, {}, "Password Changed"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  return res
+    .status(200)
+    .json(new APIResponse(200, req.user, "current user fetched"));
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+  const { newName } = req.body;
+  if (!newName) {
+    throw new APIError(400, "Name req");
+  }
+
+  const user = User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName: newName,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  return res.status(200).json(new APIResponse(200, user, "Name changed"));
+});
+
+const updateAvatar = asyncHandler(async (req, res) => {
+  const avatarPath = req.file?.path;
+  if (!avatarPath) {
+    throw new APIError(401, "Avatar not found");
+  }
+  const avatar = await uploadOnCloudinary(avatarPath);
+
+  if (!avatar.url) {
+    throw new APIError(401, "Avatar not uploaded");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { avatar: avatar.url },
+    },
+    { new: true }
+  ).select("-password");
+
+  return new APIResponse(200, user, "Avatar changed");
+});
+const updateCover = asyncHandler(async (req, res) => {
+  const coverPath = req.file?.path;
+  if (!coverPath) {
+    throw new APIError(401, "Cover not found");
+  }
+  const cover = await uploadOnCloudinary(coverPath);
+
+  if (!cover.url) {
+    throw new APIError(401, "cover not uploaded");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: { cover: cover.url },
+    },
+    { new: true }
+  ).select("-password");
+  return new APIResponse(200, user, "Cover changed");
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getCurrentUser,
+  updateUser,
+  updateAvatar,
+  updateCover,
+};
